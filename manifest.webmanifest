@@ -1,0 +1,17 @@
+{
+  "name": "Rubik Academy — F2L · OLL · PLL",
+  "short_name": "Rubik Academy",
+  "description": "Học Rubik từ cơ bản đến CFOP nâng cao: 41 F2L, 57 OLL, 21 PLL, có hình 3D, kiểm tra và công cụ giải khối.",
+  "lang": "vi",
+  "start_url": "./index.html#/home",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d111a",
+  "theme_color": "#0d111a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

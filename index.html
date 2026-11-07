@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<title>Rubik Academy — F2L · OLL · PLL</title>
+<meta name="theme-color" content="#0d111a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rubik Academy">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <a class="brand" href="#/home"><span class="logo"><i></i><i></i><i></i><i></i></span><span><b>Rubik Academy</b><small>CFOP nâng cao</small></span></a>
+    <nav id="tabs"></nav>
+    <div class="side-foot">Phím tắt trong chi tiết:<br><kbd>Space</kbd> chạy · <kbd>←</kbd><kbd>→</kbd> bước · <kbd>Esc</kbd> đóng</div>
+  </aside>
+  <div class="content"><main id="view"></main></div>
+</div>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script src="js/cube.js"></script>
+<script src="js/data-last-layer.js"></script>
+<script src="js/data-f2l.js"></script>
+<script src="js/data-basics.js"></script>
+<script src="js/data-special.js"></script>
+<script src="js/solver.js"></script>
+<script src="js/render.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>
