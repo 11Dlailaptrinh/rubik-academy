@@ -1,5 +1,5 @@
 /* Sinh tự động bởi tools/build-web.js */
-const CACHE = 'rubik-academy-699444e028';
+const CACHE = 'rubik-academy-f27ad0bbd1';
 const FILES = [
  "./",
  "index.html",
@@ -11,6 +11,8 @@ const FILES = [
  "js/data-f2l.js",
  "js/data-last-layer.js",
  "js/data-special.js",
+ "js/data-wv.js",
+ "js/data-zbll.js",
  "js/pwa.js",
  "js/render.js",
  "js/solver.js",

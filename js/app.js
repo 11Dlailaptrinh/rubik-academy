@@ -92,11 +92,37 @@
       return { key: 'pll-' + d.name, kind: 'pll', name: d.name, title: 'PLL ' + d.name, alg: d.alg, group: d.group, tags: [d.group], info, star: PLL_STAR[d.name] || false };
     })
   };
+  /* ---------- Bộ mở rộng: COLL, ZBLL, Winter Variation ---------- */
+  const ZB_SHAPE = { T: 'T', U: 'U', L: 'L', H: 'H', Pi: 'Pi', S: 'Sune', AS: 'Anti-Sune' };
+  const ZB_OLL = { T: 24, U: 23, L: 25, H: 21, Pi: 22, S: 27, AS: 26 };
+  const ZB_COLOR = { T: '#ffd500', U: '#ff7a1a', L: '#3ddc84', H: '#4aa8ff', Pi: '#c77dff', S: '#ff5d8f', AS: '#2dd4bf' };
+  const ZB_COLL = {}; window.ZBLLData.forEach(d => { if (d.coll) ZB_COLL[d.shape + d.set] = d; });
+  SETS.zbll = window.ZBLLData.map(d => ({
+    key: 'zbll-' + d.id, kind: 'zbll', title: 'ZBLL ' + d.id, alg: d.alg, shape: d.shape, set: d.set, coll: d.coll, fb: d.fb, fbPre: d.fbPre,
+    group: `${ZB_SHAPE[d.shape]} · nhóm góc ${d.set}`, chip: ZB_SHAPE[d.shape],
+    tags: [ZB_SHAPE[d.shape], ...(d.coll ? ['COLL'] : ['Cạnh: ' + d.fb])], star: false
+  }));
+  SETS.coll = window.ZBLLData.filter(d => d.coll).map(d => ({
+    key: 'coll-' + d.shape + d.set, kind: 'coll', title: `COLL ${d.shape}${d.set}`, alg: d.alg, shape: d.shape, set: d.set, zbll: d.id,
+    group: ZB_SHAPE[d.shape], tags: [ZB_SHAPE[d.shape]], star: false
+  }));
+  const OCLL_KEYS = Object.entries(ZB_OLL).map(([sh, id]) => [C.ollKey(C.caseState(window.LLData.OLL.find(o => o.id === id).alg)), sh]);
+  SETS.wv = window.WVData.map(d => {
+    // nếu chỉ chèn cặp bằng R U R' thì mặt trên sẽ thành hình OCLL nào?
+    let after = null;
+    for (const a of ['', 'U', 'U2', "U'"]) {
+      const s2 = C.applyAlg(C.caseState(d.alg), a + " R U R'");
+      if (!C.isF2LIntact(s2)) continue;
+      const i = C.ollInfo(s2); after = i.corners === 4 ? 'skip' : (OCLL_KEYS.find(([k]) => k === C.ollKey(s2)) || [])[1]; break;
+    }
+    const g = after === 'skip' ? 'Mặt trên sẽ vàng sẵn' : after ? `Nếu chèn thường sẽ ra ${ZB_SHAPE[after]}` : 'Khác';
+    return { key: 'wv-' + d.id, kind: 'wv', title: d.id, alg: d.alg, wvAfter: after, group: g, tags: after && after !== 'skip' ? [ZB_SHAPE[after]] : [], star: false };
+  });
   const PALETTE = ['#ffd500', '#ff7a1a', '#3ddc84', '#4aa8ff', '#c77dff', '#ff5d8f', '#2dd4bf', '#f4a261', '#9aa3b8'];
   for (const k in SETS) {
     const groups = [...new Set(SETS[k].map(i => i.group))];
     for (const it of SETS[k]) {
-      it.gc = PALETTE[groups.indexOf(it.group) % PALETTE.length];
+      it.gc = it.shape ? ZB_COLOR[it.shape] : PALETTE[groups.indexOf(it.group) % PALETTE.length];
       let st = C.caseState(it.alg); it.play = it.alg; it.pre = '';
       if (k === 'pll') { // xoay U (AUF) sao cho hình tình huống gọn nhất, giống sơ đồ chuẩn
         let best = 99, ba = 0, cur = C.clone(st);
@@ -138,6 +164,18 @@
     pll: {
       name: 'PLL', full: 'Permute Last Layer', count: 21,
       intro: 'PLL <b>hoán vị</b> các mảnh tầng cuối (mặt trên đã vàng) để hoàn thành khối. Có 21 trường hợp. Sơ đồ hiện màu thật của mặt trên và các sticker bên cạnh. Mẹo nhận dạng: tìm <b>đèn pha</b> (2 góc cùng màu cạnh nhau) và <b>thanh</b> (3 ô cùng màu), rồi xoay U để khớp sơ đồ. Sau công thức có thể cần 1 lần xoay U (AUF).'
+    },
+    coll: {
+      name: 'COLL', full: 'Corners of the Last Layer', count: 40,
+      intro: 'Dùng khi tầng trên <b>đã có chữ thập vàng</b> (cạnh đã định hướng). COLL làm vàng mặt trên <b>và</b> đưa 4 góc về đúng chỗ trong 1 công thức, giữ nguyên thứ tự các cạnh — sau đó chỉ còn một PLL cạnh (Ua, Ub, H, Z) hoặc xong luôn. Có 40 trường hợp, chia theo 7 hình góc (giống OLL 21–27). Đây là bước đệm tốt nhất trước khi học ZBLL. Sơ đồ hiện màu thật để nhận dạng vị trí góc.'
+    },
+    zbll: {
+      name: 'ZBLL', full: 'Zborowski–Bruchem Last Layer', count: 472,
+      intro: 'Khi chữ thập vàng đã có, ZBLL giải <b>toàn bộ tầng trên trong 1 công thức</b> (thay cho OLL + PLL). Có 472 trường hợp, chia theo <b>hình góc</b> (T, U, L, H, Pi, Sune, Anti-Sune) → <b>nhóm góc</b> (cùng cách xếp góc, mỗi nhóm 12 ca, riêng H 10 ca) → cách xếp cạnh. Ca đầu tiên của mỗi nhóm là <b>COLL</b>. Cách học: thuộc COLL trước, rồi học dần từng nhóm. Ca nào chưa thuộc có thể giải 2 bước: COLL của nhóm + 1 PLL cạnh (ghi ở mỗi thẻ). Mọi công thức do máy tìm (≤16 nước, chỉ dùng R U F D) và đã kiểm chứng bằng mô phỏng.'
+    },
+    wv: {
+      name: 'Winter Variation', full: 'WV — chèn cặp cuối + làm vàng mặt trên', count: 27,
+      intro: 'Khi còn <b>cặp F2L cuối</b> đã ghép sẵn, sẵn sàng chèn bằng <code>R U R\'</code>, và tầng trên <b>đã có chữ thập vàng</b>: WV chèn cặp và làm vàng cả mặt trên trong <b>1 công thức</b>, bỏ qua bước OLL. Có 27 trường hợp, xếp theo hình mặt trên sẽ ra nếu chỉ chèn bình thường. <b>Cách đọc hình:</b> cặp trước-phải có màu đầy đủ, tầng trên chỉ hiện vàng / xám, phần đã giải bị làm nhạt.'
     }
   };
 
@@ -148,19 +186,20 @@
     const list = kind === 'learn' ? LESSONS : SETS[kind], n = list.filter(i => learned.has(i.key)).length;
     return { n, total: list.length, pct: Math.round(n * 100 / list.length) };
   };
-  const thumbHTML = it => it.kind === 'f2l' || it.view3d ? `<canvas></canvas><div class="mini" title="Nhìn từ trên xuống">${R.topViewSVG(it.state, it.kind, { slot: it.slot })}</div>` : R.topViewSVG(it.state, it.kind, { arrows: it.kind === 'pll' });
+  const viewMode = it => ({ zbll: 'pll', coll: 'pll', wv: 'oll' })[it.kind] || it.kind;
+  const thumbHTML = it => it.kind === 'f2l' || it.view3d || it.kind === 'wv' ? `<canvas></canvas><div class="mini" title="Nhìn từ trên xuống">${R.topViewSVG(it.state, viewMode(it), { slot: it.slot })}</div>` : it.kind === 'zbll' || it.kind === 'coll' ? R.topViewSVG(it.state, 'pll', { arrows: false }) : R.topViewSVG(it.state, it.kind, { arrows: it.kind === 'pll' });
   function fillThumb(root, it) {
     if (it.kind === 'f2l') R.renderF2LThumb(root.querySelector('canvas'), it.state, 200, 165, it.slot || 'FR');
-    else if (it.view3d) {
+    else if (it.view3d || it.kind === 'wv') {
       const ctx = R.setupCanvas(root.querySelector('canvas'), 200, 165), d = Math.PI / 180;
-      R.drawCube(ctx, it.state, { cx: 100, cy: 165 * 0.53, scale: 165 * 0.205, persp: 9, yaw: -38 * d, pitch: 30 * d });
+      R.drawCube(ctx, it.state, { cx: 100, cy: 165 * 0.53, scale: 165 * 0.205, persp: 9, yaw: -38 * d, pitch: 30 * d, colorFn: it.kind === 'wv' ? R.wvColor : undefined });
     }
   }
 
   /* ---------- router ---------- */
-  const ROUTES = [['home', 'Trang chủ', '🏠'], ['learn', 'Học từ đầu', '🎓'], ['notation', 'Ký hiệu', '📖'], ['f2l', 'F2L', '🧩'], ['oll', 'OLL', '🟨'], ['pll', 'PLL', '🔄'], ['solve', 'Giải khối của bạn', '🛠️'], ['practice', 'Luyện tập', '🎯'], ['exam', 'Kiểm tra', '📝']];
+  const ROUTES = [['home', 'Trang chủ', '🏠'], ['learn', 'Học từ đầu', '🎓'], ['notation', 'Ký hiệu', '📖'], ['f2l', 'F2L', '🧩'], ['oll', 'OLL', '🟨'], ['pll', 'PLL', '🔄'], ['coll', 'COLL', '🔶'], ['zbll', 'ZBLL', '🧠'], ['wv', 'Winter Variation', '❄️'], ['solve', 'Giải khối của bạn', '🛠️'], ['practice', 'Luyện tập', '🎯'], ['exam', 'Kiểm tra', '📝']];
   let stopHero = null, notationPlayer = null, currentRoute = 'home', routeQuery;
-  const SHORT = { home: 'Trang chủ', learn: 'Học', notation: 'Ký hiệu', solve: 'Giải', practice: 'Luyện', exam: 'Kiểm tra' };
+  const SHORT = { wv: 'WV', home: 'Trang chủ', learn: 'Học', notation: 'Ký hiệu', solve: 'Giải', practice: 'Luyện', exam: 'Kiểm tra' };
   function updateNav() {
     $('#tabs').innerHTML = ROUTES.map(([r, t, ic]) => {
       const hasP = SETS[r] || r === 'learn';
@@ -178,7 +217,7 @@
     const name = ROUTES.some(x => x[0] === r) ? r : 'home';
     currentRoute = name; updateNav();
     window.scrollTo(0, 0);
-    ({ home: renderHome, learn: renderLearn, notation: renderNotation, f2l: () => renderSet('f2l'), oll: () => renderSet('oll'), pll: () => renderSet('pll'), practice: renderPractice, solve: renderSolve, exam: renderExam })[name]();
+    ({ home: renderHome, learn: renderLearn, notation: renderNotation, f2l: () => renderSet('f2l'), oll: () => renderSet('oll'), pll: () => renderSet('pll'), coll: () => renderSet('coll'), zbll: () => renderSet('zbll'), wv: () => renderSet('wv'), practice: renderPractice, solve: renderSolve, exam: renderExam })[name]();
   }
   window.addEventListener('hashchange', route);
 
@@ -200,6 +239,12 @@
         <a class="step" href="#/f2l"><span class="n">2</span><h3>F2L · ${p('f2l').n}/41</h3><p>Ghép cặp góc-cạnh, đưa vào rãnh. Hoàn thành 2 tầng đầu.</p><div class="bar"><i style="width:${p('f2l').pct}%"></i></div></a>
         <a class="step" href="#/oll"><span class="n">3</span><h3>OLL · ${p('oll').n}/57</h3><p>Làm mặt trên cùng màu vàng.</p><div class="bar"><i style="width:${p('oll').pct}%"></i></div></a>
         <a class="step" href="#/pll"><span class="n">4</span><h3>PLL · ${p('pll').n}/21</h3><p>Hoán vị tầng cuối để hoàn thành khối.</p><div class="bar"><i style="width:${p('pll').pct}%"></i></div></a>
+      </div>
+      <h2>Nâng cao hơn: bỏ bớt bước ở tầng cuối</h2>
+      <div class="steps">
+        <a class="step" href="#/wv"><span class="n">❄️</span><h3>Winter Variation · ${p('wv').n}/27</h3><p>Chèn cặp F2L cuối và làm vàng mặt trên cùng lúc — bỏ qua OLL.</p><div class="bar"><i style="width:${p('wv').pct}%"></i></div></a>
+        <a class="step" href="#/coll"><span class="n">🔶</span><h3>COLL · ${p('coll').n}/40</h3><p>Đã có chữ thập vàng: xong cả 4 góc trong 1 công thức, chỉ còn PLL cạnh.</p><div class="bar"><i style="width:${p('coll').pct}%"></i></div></a>
+        <a class="step" href="#/zbll"><span class="n">🧠</span><h3>ZBLL · ${p('zbll').n}/472</h3><p>Đã có chữ thập vàng: giải hết tầng trên trong 1 công thức (thay OLL + PLL).</p><div class="bar"><i style="width:${p('zbll').pct}%"></i></div></a>
       </div>
       <h2>Lộ trình học gợi ý (từ dễ đến đầy đủ)</h2>
       <ol class="road">
@@ -540,7 +585,7 @@
 
   /* ---------- Danh sách ---------- */
   function renderSet(kind) {
-    const m = META[kind], list = SETS[kind].concat(SPECIAL[kind]);
+    const m = META[kind], list = SETS[kind].concat(SPECIAL[kind] || []);
     const groups = [...new Set(list.map(i => i.group))];
     const st = { q: '', g: 'Tất cả', star: false };
     view.innerHTML = `
@@ -549,12 +594,12 @@
       <div class="toolbar"><input id="q" type="search" placeholder="Tìm theo tên hoặc công thức…">
         <span id="chips" style="display:flex;gap:6px;flex-wrap:wrap"></span></div>
       <div id="grid"></div>`;
-    const chips = ['Tất cả', ...(kind === 'pll' || kind === 'oll' ? ['⭐ 2-look'] : []), ...groups];
+    const chips = ['Tất cả', ...(kind === 'pll' || kind === 'oll' ? ['⭐ 2-look'] : []), ...(kind === 'zbll' ? ['COLL (học trước)'] : []), ...new Set(list.map(i => i.chip || i.group))];
     $('#chips').innerHTML = chips.map(c => `<button class="chip" data-g="${esc(c)}">${esc(c)}</button>`).join('');
     const draw = () => {
       const items = list.filter(it => {
         if (st.star && !it.star) return false;
-        if (st.g !== 'Tất cả' && !st.star && it.group !== st.g) return false;
+        if (st.g === 'COLL (học trước)') { if (!it.coll) return false; } else if (st.g !== 'Tất cả' && !st.star && (it.chip || it.group) !== st.g) return false;
         const hay = (it.title + ' ' + it.alg + ' ' + it.tags.join(' ')).toLowerCase();
         return hay.includes(st.q);
       });
@@ -638,6 +683,20 @@
         `<li><b>Sau công thức:</b> có thể cần xoay U (AUF) để các mặt bên khớp màu tâm.</li>`].join('');
     }
     if (it.kind === 'basic') return `<li>${esc(it.desc)}</li>`;
+    if (it.kind === 'zbll' || it.kind === 'coll') {
+      const col = ZB_COLL[it.shape + it.set], sh = ZB_SHAPE[it.shape];
+      return [`<li><b>Hình góc:</b> ${sh} — 4 góc có mẫu vàng giống OLL ${ZB_OLL[it.shape]} (${sh}); 4 cạnh đã vàng (chữ thập).</li>`,
+        `<li><b>Nhóm góc ${it.set}:</b> cùng cách xếp màu các góc. Nhận dạng nhóm bằng màu 2 bên của các góc (đèn pha, màu đối nhau), rồi nhận dạng ca bằng các cạnh.</li>`,
+        it.kind === 'coll' ? `<li><b>COLL:</b> công thức giữ nguyên thứ tự các cạnh. Nếu cạnh chưa đúng, sau công thức chỉ còn 1 PLL cạnh (Ua/Ub/H/Z). Đây cũng chính là <b>ZBLL ${esc(it.zbll)}</b>.</li>`
+          : it.coll ? '<li><b>Đây là ca COLL của nhóm</b> — các cạnh đã đúng chỗ so với nhau. Học ca này trước.</li>'
+          : `<li><b>Chưa thuộc? Giải 2 bước:</b> ${it.fbPre ? `xoay <code>${esc(it.fbPre)}</code>, ` : ''}làm COLL của nhóm <code>${esc(col.alg)}</code> → còn lại <b>PLL ${esc(it.fb)}</b>.</li>`,
+        `<li><b>Mẹo nhận dạng:</b> xoay U để hình góc giống sơ đồ, rồi so màu các sticker bên cạnh với sơ đồ (nhìn 2 mặt trước và phải là đủ).</li>`].join('');
+    }
+    if (it.kind === 'wv') {
+      return [`<li><b>Tình huống:</b> cặp góc–cạnh của rãnh trước-phải đã ghép sẵn ở tầng trên, sẵn sàng chèn bằng <code>R U R'</code>; tầng trên đã có chữ thập vàng.</li>`,
+        it.wvAfter === 'skip' ? '<li><b>Ca dễ nhất:</b> chèn bình thường là mặt trên vàng hết.</li>' : `<li><b>Nếu chèn bình thường</b> bằng <code>R U R'</code> thì mặt trên thành <b>${ZB_SHAPE[it.wvAfter] || '?'}</b> (OLL ${ZB_OLL[it.wvAfter] || '?'}) và cần thêm 1 công thức nữa. WV gộp 2 bước làm 1.</li>`,
+        `<li><b>Nhận dạng:</b> nhìn 3 góc tầng trên (không tính góc của cặp): mặt vàng của mỗi góc hướng lên, sang phải hay sang trái.</li>`].join('');
+    }
     return [`<li><b>Nhóm:</b> ${esc(it.group)} — ${esc(GROUP_DESC[it.group] || '')}</li>`,
       `<li><b>Cách đọc hình:</b> chỉ <b>cặp cần giải</b> (1 góc + 1 cạnh) có màu đầy đủ; mọi mảnh khác giữ màu thật nhưng được làm nhạt. Rãnh đích là góc <b>dưới-trước-phải</b>.</li>`,
       `<li><b>Cách dùng:</b> xoay U để cặp nằm đúng như hình rồi chạy công thức. Với rãnh khác, xoay cả khối (y) cho rãnh đó về trước-phải.</li>`].join('');
@@ -646,7 +705,8 @@
   function openDetail(it, list, onClose) {
     const idx = list.indexOf(it);
     modalCtx = { onClose };
-    const hasGray = it.kind === 'f2l';
+    const hasGray = it.kind === 'f2l' || it.kind === 'wv';
+    const grayFn = it.kind === 'wv' ? R.wvColor : R.f2lColorFor(it.slot);
     sheet.innerHTML = `
       <button class="x" aria-label="Đóng">✕</button>
       <div class="detail">
@@ -660,7 +720,7 @@
             <select class="btn" id="spd"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2.5">2.5×</option></select>
           </div>
           <div class="ctrls"><button class="btn" data-v="front">Nhìn trước</button><button class="btn" data-v="back">Nhìn sau</button><button class="btn" data-v="top">Nhìn từ trên</button>
-            ${hasGray ? '<label class="chip" style="cursor:pointer"><input type="checkbox" id="gray" checked> làm nổi cặp cần giải</label>' : ''}</div>
+            ${hasGray ? `<label class="chip" style="cursor:pointer"><input type="checkbox" id="gray" checked> ${it.kind === 'wv' ? 'chỉ hiện vàng / xám' : 'làm nổi cặp cần giải'}</label>` : ''}</div>
           <div class="legend" id="stepinfo"></div>
         </div>
         <div>
@@ -675,7 +735,7 @@
           <div class="film" id="film"${it.impossible ? ' hidden' : ''}></div>
           <ul class="kv">${describe(it)}</ul>
           <div class="side side-info">
-            ${it.kind === 'basic' ? '' : `<div>${R.topViewSVG(it.state, it.kind, { arrows: it.kind === 'pll', slot: it.slot })}<div class="legend">Nhìn từ trên xuống${it.kind === 'pll' ? '<br>mũi tên: mảnh cần di chuyển tới' : it.kind === 'f2l' ? '<br>chỉ tô màu cặp cần giải' : ''}</div></div>`}
+            ${it.kind === 'basic' ? '' : `<div>${R.topViewSVG(it.state, viewMode(it), { arrows: it.kind === 'pll', slot: it.slot })}<div class="legend">Nhìn từ trên xuống${it.kind === 'pll' ? '<br>mũi tên: mảnh cần di chuyển tới' : it.kind === 'f2l' ? '<br>chỉ tô màu cặp cần giải' : ''}</div></div>`}
             ${it.impossible ? `<div class="legend"><b style="color:var(--text)">Tạo lại tình huống này:</b><br>không làm được bằng cách xoay — chỉ có thể tháo mảnh ra lắp lại (hoặc vặn góc).</div>` : `<div class="legend">
               <b style="color:var(--text)">Tạo lại tình huống này trên khối thật:</b><br>từ khối đã giải, thực hiện công thức đảo ngược<br>
               <code style="color:var(--accent)">${it.setup === '' ? '(không cần — bắt đầu từ khối đã giải)' : esc(it.setup ?? C.invertAlg(it.alg))}</code>
@@ -697,14 +757,14 @@
       if (!player.total) { $('#stepinfo').textContent = it.impossible ? 'Kéo để xoay xem khối từ mọi phía' : ''; bplay.textContent = '▶ Chạy'; return; }
       $('#stepinfo').textContent = `Bước ${player.index}/${player.total}` + (player.index === 0 ? ' — trạng thái ban đầu của tình huống' : player.index === player.total ? ' — hoàn thành!' : '');
     };
-    player = new R.Player(canvas, { size: 340, yaw: hasGray ? R.SLOT_YAW[it.slot || 'FR'] : undefined, colorFn: hasGray ? R.f2lColorFor(it.slot) : undefined, onChange: upd });
+    player = new R.Player(canvas, { size: 340, yaw: hasGray ? R.SLOT_YAW[it.slot || 'FR'] : undefined, colorFn: hasGray ? grayFn : undefined, onChange: upd });
     player.load(it.state, it.play);
     const P = player;
     const film = $('#film'), toks = C.tokens(it.play);
     P.states.forEach((s, i) => {
       const f = el(`<button class="fr" title="${i ? 'Sau bước ' + i : 'Trạng thái ban đầu'}"><canvas></canvas><span>${i ? esc(toks[i - 1]) : 'Đầu'}</span></button>`);
       film.appendChild(f); frames.push(f);
-      R.renderCubeThumb(f.querySelector('canvas'), s, 70, 70, hasGray ? R.f2lColorFor(it.slot) : undefined, hasGray ? R.SLOT_YAW[it.slot || 'FR'] : -35);
+      R.renderCubeThumb(f.querySelector('canvas'), s, 70, 70, hasGray ? grayFn : undefined, hasGray ? R.SLOT_YAW[it.slot || 'FR'] : -35);
       f.onclick = () => P.seek(i);
     });
     sheet.querySelector('.x').onclick = closeModal;
@@ -717,13 +777,13 @@
       if (b.dataset.v) P.setView({ front: -35, back: 145, top: -35 }[b.dataset.v], b.dataset.v === 'top' ? 80 : 30);
     });
     $('#spd').onchange = e => { P.speed = +e.target.value; };
-    if (hasGray) $('#gray').onchange = e => { P.colorFn = e.target.checked ? R.f2lColorFor(it.slot) : undefined; P.draw(); };
+    if (hasGray) $('#gray').onchange = e => { P.colorFn = e.target.checked ? grayFn : undefined; P.draw(); };
     if ($('#algbox')) $('#algbox').addEventListener('click', e => { const b = e.target.closest('.mv'); if (b) P.seek(+b.dataset.i + 1); });
     sheet.querySelectorAll('[data-n]').forEach(b => b.onclick = () => {
       const nxt = list[idx + +b.dataset.n]; if (!nxt) return;
       const cb = modalCtx.onClose; player.pause(); openDetail(nxt, list, cb);
     });
-    if (hasGray) $('#gray').addEventListener('change', e => frames.forEach((f, i) => R.renderCubeThumb(f.querySelector('canvas'), P.states[i], 70, 70, e.target.checked ? R.f2lColorFor(it.slot) : undefined, R.SLOT_YAW[it.slot || 'FR'])));
+    if (hasGray) $('#gray').addEventListener('change', e => frames.forEach((f, i) => R.renderCubeThumb(f.querySelector('canvas'), P.states[i], 70, 70, e.target.checked ? grayFn : undefined, R.SLOT_YAW[it.slot || 'FR'])));
     $('#blearn').onclick = e => { toggleLearned(it.key); e.target.className = 'btn ' + (learned.has(it.key) ? 'ok' : ''); e.target.textContent = learned.has(it.key) ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc'; };
     upd();
   }

@@ -114,6 +114,8 @@
   // chỉ 2 mảnh của cặp cần giải có màu đầy đủ; mọi thứ khác giữ đúng màu nhưng làm nhạt
   const f2lColorFor = slot => { const ip = pairOf(slot); return s => ip(s) ? C.FACE_COLORS[s.c] : MUTED[s.c]; };
   const f2lColor = f2lColorFor('FR');
+  // WV: cặp trước-phải màu đầy đủ, tầng trên chỉ phân biệt vàng / không vàng, phần còn lại nhạt
+  const wvColor = s => pairOf('FR')(s) ? C.FACE_COLORS[s.c] : s.home[1] === 1 ? (s.c === 'U' ? C.FACE_COLORS.U : GRAY) : MUTED[s.c];
   // góc nhìn đẹp nhất cho từng rãnh
   const SLOT_YAW = { FR: -38, FL: 38, BR: -142, BL: 142 };
   // Thẻ F2L: một góc nhìn lớn hướng vào rãnh đích, có phối cảnh
@@ -273,5 +275,5 @@
     }
   }
 
-  root.Render = { drawCube, renderF2LThumb, renderCubeThumb, topViewSVG, Player, grayLL, f2lColor, f2lColorFor, SLOT_YAW, setupCanvas };
+  root.Render = { drawCube, renderF2LThumb, renderCubeThumb, topViewSVG, Player, grayLL, f2lColor, f2lColorFor, wvColor, SLOT_YAW, setupCanvas };
 })(window);
