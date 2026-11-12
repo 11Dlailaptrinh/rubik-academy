@@ -1,13 +1,15 @@
 /* Sinh tự động bởi tools/build-web.js */
-const CACHE = 'rubik-academy-f27ad0bbd1';
+const CACHE = 'rubik-academy-f04891b9d4';
 const FILES = [
  "./",
  "index.html",
  "manifest.webmanifest",
  "css/style.css",
  "js/app.js",
+ "js/bigcube.js",
  "js/cube.js",
  "js/data-basics.js",
+ "js/data-big.js",
  "js/data-f2l.js",
  "js/data-last-layer.js",
  "js/data-special.js",

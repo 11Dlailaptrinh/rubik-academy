@@ -40,7 +40,18 @@
     return out;
   })();
 
-  /* o: {cx, cy, scale, yaw, pitch | mat, persp, colorFn, anim:{k, lay, angle}} */
+  const STICKER_BIG = (() => {
+    const h = 0.44, r = 0.08, out = [];
+    [[1, 1], [-1, 1], [-1, -1], [1, -1]].forEach(([sa, sb], ci) => {
+      for (let k = 0; k <= 4; k++) {
+        const t = ci * Math.PI / 2 + k * Math.PI / 8;
+        out.push([sa * (h - r) + r * Math.cos(t), sb * (h - r) + r * Math.sin(t)]);
+      }
+    });
+    return out;
+  })();
+
+  /* o: {cx, cy, scale, yaw, pitch | mat, persp, colorFn, N, anim:{k, lay, angle}} */
   function drawCube(ctx, state, o) {
     const map = new Map();
     for (const s of state) map.set(s.p.join(',') + '|' + s.n.join(','), s);
@@ -52,16 +63,19 @@
     };
     const D = o.persp || 0; // khoảng cách camera (đơn vị = 1 khối con); 0 = chiếu song song
     const units = [];
-    for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+    // lưới ô con: khối 3×3 dùng toạ độ -1..1; khối N×N dùng toạ độ 2i-(N-1) và thu nhỏ để bề ngang vẫn = 3
+    const NN = o.N || 3, cs = [], kk = NN === 3 ? 1 : 3 / (2 * NN), uu = NN === 3 ? 1 : 3 / NN, stk0 = NN === 3 ? STICKER : STICKER_BIG;
+    for (let i = 0; i < NN; i++) cs.push(NN === 3 ? i - 1 : 2 * i - (NN - 1));
+    for (const x of cs) for (const y of cs) for (const z of cs) {
       const p = [x, y, z];
       const moving = o.anim && o.anim.lay(p);
       for (const n of NS) {
         const st = map.get(p.join(',') + '|' + n.join(','));
-        const ctr = [x + n[0] / 2, y + n[1] / 2, z + n[2] / 2];
+        const ctr = [x * kk + n[0] * uu / 2, y * kk + n[1] * uu / 2, z * kk + n[2] * uu / 2];
         const [t1, t2] = tangents(n);
-        const at = ([a, b]) => [0, 1, 2].map(i => ctr[i] + a * t1[i] + b * t2[i]);
+        const at = ([a, b]) => [0, 1, 2].map(i => ctr[i] + uu * (a * t1[i] + b * t2[i]));
         let body = [[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]].map(at);
-        let stk = st ? STICKER.map(at) : null;
+        let stk = st ? stk0.map(at) : null;
         let c2 = ctr, n2 = n;
         if (moving) {
           const rr = q => arot(q, o.anim.k, o.anim.angle);
@@ -110,35 +124,38 @@
   const isPairS = s => s.home[0] === 1 && s.home[2] === 1 && s.home[1] <= 0;
   const isCenter = s => Math.abs(s.home[0]) + Math.abs(s.home[1]) + Math.abs(s.home[2]) === 1;
   const SLOT_XZ = { FR: [1, 1], FL: [-1, 1], BR: [1, -1], BL: [-1, -1] };
-  const pairOf = slot => { const [x, z] = SLOT_XZ[slot || 'FR']; return s => s.home[0] === x && s.home[2] === z && s.home[1] <= 0; };
+  // N×N: quy toạ độ gốc của mảnh về -1/0/1 như 3×3 (lớp trong → 0)
+  const sg3 = N => { const e = N && N !== 3 ? N - 1 : 1; return v => (Math.abs(v) === e ? Math.sign(v) : 0); };
+  const pairOf = (slot, N) => { const [x, z] = SLOT_XZ[slot || 'FR'], g = sg3(N); return s => g(s.home[0]) === x && g(s.home[2]) === z && g(s.home[1]) <= 0; };
   // chỉ 2 mảnh của cặp cần giải có màu đầy đủ; mọi thứ khác giữ đúng màu nhưng làm nhạt
-  const f2lColorFor = slot => { const ip = pairOf(slot); return s => ip(s) ? C.FACE_COLORS[s.c] : MUTED[s.c]; };
+  const f2lColorFor = (slot, N) => { const ip = pairOf(slot, N); return s => ip(s) ? C.FACE_COLORS[s.c] : MUTED[s.c]; };
   const f2lColor = f2lColorFor('FR');
   // WV: cặp trước-phải màu đầy đủ, tầng trên chỉ phân biệt vàng / không vàng, phần còn lại nhạt
   const wvColor = s => pairOf('FR')(s) ? C.FACE_COLORS[s.c] : s.home[1] === 1 ? (s.c === 'U' ? C.FACE_COLORS.U : GRAY) : MUTED[s.c];
   // góc nhìn đẹp nhất cho từng rãnh
   const SLOT_YAW = { FR: -38, FL: 38, BR: -142, BL: 142 };
   // Thẻ F2L: một góc nhìn lớn hướng vào rãnh đích, có phối cảnh
-  function renderF2LThumb(canvas, state, w = 200, h = 165, slot = 'FR') {
+  function renderF2LThumb(canvas, state, w = 200, h = 165, slot = 'FR', N) {
     const ctx = setupCanvas(canvas, w, h);
-    drawCube(ctx, state, { cx: w / 2, cy: h * 0.53, scale: h * 0.205, persp: 9, yaw: SLOT_YAW[slot] * D2R, pitch: 30 * D2R, colorFn: f2lColorFor(slot) });
+    drawCube(ctx, state, { cx: w / 2, cy: h * 0.53, scale: h * 0.205, persp: 9, yaw: SLOT_YAW[slot] * D2R, pitch: 30 * D2R, colorFn: f2lColorFor(slot, N), N });
   }
-  function renderCubeThumb(canvas, state, w = 120, h = 120, colorFn, yawDeg = -35) {
+  function renderCubeThumb(canvas, state, w = 120, h = 120, colorFn, yawDeg = -35, N) {
     const ctx = setupCanvas(canvas, w, h);
-    drawCube(ctx, state, { cx: w / 2, cy: h / 2 + 2, scale: h * 0.31, yaw: yawDeg * D2R, pitch: 30 * D2R, colorFn });
+    drawCube(ctx, state, { cx: w / 2, cy: h / 2 + 2, scale: h * 0.31, yaw: yawDeg * D2R, pitch: 30 * D2R, colorFn, N });
   }
 
   /* ---------- Sơ đồ nhìn từ trên ---------- */
   function topViewSVG(state, mode, opts) { // mode: 'oll' (vàng/xám) | 'pll' (màu thật)
-    const s = 19, gap = 2, t = 8, g = 2;
-    const gw = 3 * s + 2 * gap, margin = 4, gx = margin + t + g, gy = gx, total = gw + 2 * (margin + t + g);
+    const N = (opts && opts.N) || 3, ext = N === 3 ? 1 : N - 1, ix = v => (N === 3 ? v + 1 : (v + N - 1) / 2);
+    const gap = N === 3 ? 2 : N === 4 ? 1.6 : 1.3, t = 8, g = 2, gw = 3 * 19 + 2 * 2, s = (gw - (N - 1) * gap) / N;
+    const margin = 4, gx = margin + t + g, gy = gx, total = gw + 2 * (margin + t + g);
     const colorOf = st => mode === 'oll' ? (st.c === 'U' ? '#ffd500' : '#3b4152')
-      : mode === 'f2l' ? (pairOf(opts && opts.slot)(st) ? C.FACE_COLORS[st.c] : MUTED[st.c]) : C.FACE_COLORS[st.c];
+      : mode === 'f2l' ? (pairOf(opts && opts.slot, N)(st) ? C.FACE_COLORS[st.c] : MUTED[st.c]) : C.FACE_COLORS[st.c];
     let out = `<svg viewBox="0 0 ${total} ${total}" xmlns="http://www.w3.org/2000/svg" role="img">`;
     const rect = (x, y, w, h, col) => out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2.5" fill="${col}"/>`;
     for (const st of state) {
-      if (st.p[1] !== 1) continue;
-      const col = colorOf(st), cx = st.p[0] + 1, cz = st.p[2] + 1;
+      if (st.p[1] !== ext) continue;
+      const col = colorOf(st), cx = ix(st.p[0]), cz = ix(st.p[2]);
       if (st.n[1] === 1) rect(gx + cx * (s + gap), gy + cz * (s + gap), s, s, col);
       else if (st.n[2] === 1) rect(gx + cx * (s + gap), gy + gw + g, s, t, col);
       else if (st.n[2] === -1) rect(gx + cx * (s + gap), gy - g - t, s, t, col);
@@ -146,8 +163,9 @@
       else if (st.n[0] === -1) rect(gx - g - t, gy + cz * (s + gap), t, s, col);
     }
     if (opts && opts.arrows) {
-      const { c, e } = C.pllPerm(state);
-      const mid = (slots, i) => [gx + (slots[i][0] + 1) * (s + gap) + s / 2, gy + (slots[i][2] + 1) * (s + gap) + s / 2];
+      const { c, e } = C.pllPerm(opts.state3 || state); // khối lớn: hoán vị lấy từ trạng thái 3×3 tương ứng
+      const k3 = (N - 1) / 2;
+      const mid = (slots, i) => [gx + (slots[i][0] + 1) * k3 * (s + gap) + s / 2, gy + (slots[i][2] + 1) * k3 * (s + gap) + s / 2];
       const uid = 'ah' + Math.random().toString(36).slice(2, 7);
       out += `<defs><marker id="${uid}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs>`;
       const draw = (perm, slots, col) => {
@@ -175,14 +193,15 @@
       this.defYaw = opts.yaw ?? -35; this.defPitch = opts.pitch ?? 30;
       this.mat = matFromYP(this.defYaw * D2R, this.defPitch * D2R); this.zoom = 1; this.inertia = null;
       this.colorFn = opts.colorFn; this.onChange = opts.onChange || (() => {});
+      this.E = opts.engine || C; this.N = opts.N;
       this.speed = 1; this.playing = false; this.anim = null;
       this.ctx = setupCanvas(canvas, this.size, this.size);
       this.bindDrag();
     }
     load(startState, alg) {
-      this.moves = C.parseAlg(alg);
+      this.moves = this.E.parseAlg(alg);
       this.states = [startState];
-      for (const mv of this.moves) { const n = C.clone(this.states[this.states.length - 1]); C.applyMove(n, mv); this.states.push(n); }
+      for (const mv of this.moves) { const n = this.E.clone(this.states[this.states.length - 1]); this.E.applyMove(n, mv); this.states.push(n); }
       this.index = 0; this.anim = null; this.playing = false; this.draw(); this.onChange();
     }
     get total() { return this.moves.length; }
@@ -197,7 +216,7 @@
         const full = -mv.q * (Math.PI / 2); // chiều kim đồng hồ = góc âm quanh trục
         anim = { k: mv.k, lay: mv.lay, angle: full * (this.anim.dir > 0 ? ease : 1 - ease) };
       }
-      drawCube(ctx, state, { cx: S / 2, cy: S / 2, scale: S * 0.172 * this.zoom, persp: 9, mat: this.mat, colorFn: this.colorFn, anim });
+      drawCube(ctx, state, { cx: S / 2, cy: S / 2, scale: S * 0.172 * this.zoom, persp: 9, mat: this.mat, colorFn: this.colorFn, anim, N: this.N });
     }
     // chuyển động i (tiến dir=1: từ trạng thái i; lùi dir=-1: từ trạng thái i+1 về i)
     _start(i, dir) {
@@ -275,5 +294,5 @@
     }
   }
 
-  root.Render = { drawCube, renderF2LThumb, renderCubeThumb, topViewSVG, Player, grayLL, f2lColor, f2lColorFor, wvColor, SLOT_YAW, setupCanvas };
+  root.Render = { MUTED, drawCube, renderF2LThumb, renderCubeThumb, topViewSVG, Player, grayLL, f2lColor, f2lColorFor, wvColor, SLOT_YAW, setupCanvas };
 })(window);

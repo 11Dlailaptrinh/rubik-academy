@@ -60,6 +60,31 @@
     [57, "R U R' U' M' U R U' r'"]
   ].map(([id, alg]) => ({ id, alg }));
 
+  // Công thức thay thế cho từng PLL (đã kiểm chứng: mỗi công thức giải đúng tình huống, có thể cần xoay U trước/sau — AUF)
+  const PLL_ALTS = {
+    Ua: ["M2 U M U2 M' U M2", "R2 U' R' U' R U R U R U' R", "F2 U' M' U2 M U' F2", "R2 U' S' U2 S U' R2", "R2 U S R2 S' R2 U' R2"],
+    Ub: ["M2 U' M U2 M' U' M2", "F2 U M' U2 M U F2", "R' U R' U' R' U' R' U R U R2", "L2 U L U L' U' L' U' L' U L'", "L' U L' U' L' U' L' U L U L2", "R2 U' S R2 S' R2 U R2"],
+    H: ["R2 U2 R U2 R2 U2 R2 U2 R U2 R2", "M2 U' M2 U2 M2 U' M2"],
+    Z: ["M2 U' M2 U' M' U2 M2 U2 M'", "M2 U M2 U M' U2 M2 U2 M'", "M' U' M2 U' M2 U' M' U2 M2", "R' U' R U' R U R U' R' U R U R2 U' R'", "R U R' U R' U' R' U R U' R' U' R2 U R"],
+    Aa: ["x L2 D2 L' U' L D2 L' U L' x'", "R' F R' B2 R F' R' B2 R2", "l' U R' D2 R U' R' D2 R2 x'"],
+    Ab: ["x L U' L D2 L' U L D2 L2 x'", "R B' R F2 R' B R F2 R2"],
+    E: ["x' L' U L D' L' U' L D L' U' L D' L' U L D x", "R2 U R' U' y R U R' U' R U R' U' R U R' y' R U' R2"],
+    Ja: ["x R2 F R F' R U2 r' U r U2 x'", "L' U' L F L' U' L U L F' L2 U L", "L' U2 L U L' U2 R U' L U R'"],
+    Jb: ["R U2 R' U' R U2 L' U R' U' L", "r' F R F' r U2 R' U R U2 R'", "R U R2 F' R U R U' R' F R U' R'"],
+    Ra: ["R U R' F' R U2 R' U2 R' F R U R U2 R'", "L U2 L' U2 L F' L' U' L U L F L2"],
+    Rb: ["R2 F R U R U' R' F' R U2 R' U2 R", "R' U R U R' U' R' D' R U R' D R U2 R", "L' U2 L U2 L' B L U L' U' L' B' L2"],
+    T: ["F R U' R' U R U R2 F' R U R U' R'", "R2 U R2 U' R2 U' D R2 U' R2 U R2 D'"],
+    F: ["R' U R U' R2 F' U' F U R F R' F' R2", "R' U2 R' d' R' F' R2 U' R' U R' F R U' F y'"],
+    Y: ["F R' F R2 U' R' U' R U R' F' R U R' U' F'", "R2 U' R2 U' R2 U R' F' R U R2 U' R' F R"],
+    V: ["R' U R' d' R' F' R2 U' R' U R' F R F y'", "R U2 R' D R U' R U' R U R2 D R' U' R D2", "R' U R U' R' f' U' R U2 R' U' R U' R' f R"],
+    Na: ["z U R' D R2 U' R D' U R' D R2 U' R D' z'", "L U' R U2 L' U R' L U' R U2 L' U R'", "R U' L U2 R' U L' R U' L U2 R' U L'", "F' R U R' U' R' F R2 F U' R' U' R U F' R'"],
+    Nb: ["z D' R U' R2 D R' U D' R U' R2 D R' U z'", "R' U L' U2 R U' L R' U L' U2 R U' L", "r' D' F r U' r' F' D r2 U r' U' r' F r F'"],
+    Ga: ["R2 u R' U R' U' R u' R2 F' U F"],
+    Gb: ["F' U' F R2 u R' U R U' R u' R2", "R' U' R y R2 u R' U R U' R u' R2 y'"],
+    Gc: ["R2 u' R U' R U R' u R2 f R' f'"],
+    Gd: ["f R f' R2 u' R U' R' U R' u R2", "R U R' y' R2 u' R U' R' U R' u R2 y"]
+  };
+
   // nhóm: 'ed' = cạnh/ góc cơ bản
   const PLL = [
     ['Aa', 'Góc', "x R' U R' D2 R U' R' D2 R2 x'"],
@@ -83,7 +108,7 @@
     ['Gb', 'G-perm', "R' U' R U D' R2 U R' U R U' R U' R2 D"],
     ['Gc', 'G-perm', "R2 U' R U' R U R' U R2 U D' R U' R' D"],
     ['Gd', 'G-perm', "R U R' U' D R2 U' R U' R' U R' U R2 D'"]
-  ].map(([name, group, alg]) => ({ name, group, alg }));
+  ].map(([name, group, alg]) => ({ name, group, alg, alts: PLL_ALTS[name] || [] }));
 
   const data = { OLL, PLL };
   if (typeof module !== 'undefined' && module.exports) module.exports = data; else root.LLData = data;
