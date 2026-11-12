@@ -292,18 +292,18 @@
   }
 
   /* ---------- router ---------- */
-  let stopHero = null, notationPlayer = null, currentRoute = 'home', routeQuery, curPz = PUZZLES[0];
+  let timerW = null, stopHero = null, notationPlayer = null, currentRoute = 'home', routeQuery, curPz = PUZZLES[0];
   try { curPz = PUZZLES.find(p => p.id === localStorage.getItem('rubik-puzzle')) || curPz; } catch (e) { /* bỏ qua */ }
   const lastSec = {};
   const SHORT = { wv: 'WV', learn: 'Học', notation: 'Ký hiệu', solve: 'Giải', practice: 'Luyện', exam: 'Kiểm tra', intro: 'Cách giải', centers: 'Tâm', edges: 'Cạnh' };
   const PAGES_3 = { learn: renderLearn, notation: renderNotation, practice: renderPractice, solve: renderSolve, exam: renderExam };
   function updateNav() {
-    $('#pzsw').innerHTML = PUZZLES.map(p => `<a href="#/${p.id}/${lastSec[p.id] || p.sections[0][0]}" class="${p === curPz && currentRoute !== 'home' ? 'on' : p === curPz ? 'cur' : ''}" title="${esc(p.desc)}">${p.name}</a>`).join('');
+    $('#pzsw').innerHTML = PUZZLES.map(p => `<a href="#/${p.id}/${lastSec[p.id] || p.sections[0][0]}" class="${p === curPz && currentRoute !== 'home' && currentRoute !== 'timer' ? 'on' : p === curPz ? 'cur' : ''}" title="${esc(p.desc)}">${p.name}</a>`).join('');
     const link = (href, on, ic, t, short, key) => {
       const hasP = !!key, pr = hasP && progress(key);
       return `<a href="${href}" class="${on ? 'on' : ''}"><span class="ic">${ic}</span><span class="lb">${t}</span><span class="lbs">${short || t}</span>${hasP ? ` <small class="cnt" style="margin-left:auto;opacity:.7">${pr.n}/${pr.total}</small><span class="pg"><i style="width:${pr.pct}%"></i></span>` : ''}</a>`;
     };
-    $('#tabs').innerHTML = link('#/home', currentRoute === 'home', '🏠', 'Trang chủ', 'Trang chủ') +
+    $('#tabs').innerHTML = link('#/home', currentRoute === 'home', '🏠', 'Trang chủ', 'Trang chủ') + link('#/timer', currentRoute === 'timer', '⏱️', 'Bấm giờ', 'Bấm giờ') +
       `<div class="navh">${curPz.icon} Khối ${curPz.name}</div>` +
       curPz.sections.map(([sec, t, ic]) => {
         const k = curPz.id === '3x3' && sec === 'learn' ? 'learn' : setKeyOf(curPz, sec);
@@ -316,6 +316,7 @@
   function route() {
     closeModal();
     if (stopHero) { stopHero(); stopHero = null; }
+    if (timerW) { timerW.destroy(); timerW = null; }
     const [path, qs] = (location.hash.replace(/^#\/?/, '') || 'home').split('?'); routeQuery = qs;
     let [a, b] = path.split('/'), pz = PUZZLES.find(p => p.id === a), sec = b;
     if (!pz) { // đường dẫn cũ: #/f2l, #/learn… thuộc 3×3; #/b4, #/b5 là 4×4, 5×5
@@ -324,14 +325,14 @@
       else if (PUZZLES[0].sections.some(x => x[0] === a)) { pz = PUZZLES[0]; sec = a; }
     }
     if (pz && !pz.sections.some(x => x[0] === sec)) sec = pz.sections[0][0];
-    if (!pz) { currentRoute = 'home'; }
+    if (!pz) { currentRoute = a === 'timer' ? 'timer' : 'home'; }
     else {
       curPz = pz; lastSec[pz.id] = sec; currentRoute = pz.id + '/' + sec;
       try { localStorage.setItem('rubik-puzzle', pz.id); } catch (e) { /* bỏ qua */ }
     }
     updateNav();
     window.scrollTo(0, 0);
-    if (!pz) return renderHome();
+    if (!pz) return currentRoute === 'timer' ? renderTimer() : renderHome();
     if (pz.id === '3x3' && PAGES_3[sec]) return PAGES_3[sec]();
     renderSet(setKeyOf(pz, sec));
   }
@@ -339,8 +340,13 @@
 
   /* ---------- Trang chủ ---------- */
   function renderHome() {
-    view.innerHTML = '<section class="pins home-pins" id="pins"></section>';
+    view.innerHTML = '<section class="home-timer" id="timerw"></section><section class="pins home-pins" id="pins"></section>';
+    timerW = window.Timer.mount($('#timerw'));
     drawPins();
+  }
+  function renderTimer() {
+    view.innerHTML = '<section id="timerw"></section>';
+    timerW = window.Timer.mount($('#timerw'), { full: true });
   }
 
   // tìm mục theo key trong mọi bộ công thức (kể cả trường hợp đặc biệt, 4×4, 5×5)

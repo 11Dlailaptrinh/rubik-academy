@@ -1,5 +1,5 @@
 /* Sinh tự động bởi tools/build-web.js */
-const CACHE = 'rubik-academy-2609d6e372';
+const CACHE = 'rubik-academy-19158116f2';
 const FILES = [
  "./",
  "index.html",
@@ -18,6 +18,7 @@ const FILES = [
  "js/pwa.js",
  "js/render.js",
  "js/solver.js",
+ "js/timer.js",
  "icons/icon-180.png",
  "icons/icon-192.png",
  "icons/icon-512.png"
