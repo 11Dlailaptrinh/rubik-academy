@@ -425,3 +425,6 @@ button, a, .card, .sv-c { touch-action: manipulation; -webkit-tap-highlight-colo
 .pinbox label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
 .pinbox textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;font-size:14px;resize:vertical}
 @media(max-width:700px){.pin-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.pins{margin-top:0}}
+.pinrow{margin:10px 0 4px}
+.pinrow #bpin{font-weight:600}
+.pinrow .pinbox label{margin-top:6px}

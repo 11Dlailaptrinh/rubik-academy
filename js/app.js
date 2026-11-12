@@ -894,6 +894,7 @@
           <div class="tags" style="margin-bottom:6px">${it.star ? '<span class="tag star">⭐ 2-look</span>' : ''}${it.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
           <div class="sec-h"><h1 style="margin:0">${esc(it.title)}</h1>
             <div class="ctrls"><button class="btn" data-n="-1" ${idx <= 0 ? 'disabled' : ''}>‹ Trước</button><button class="btn" data-n="1" ${idx >= list.length - 1 ? 'disabled' : ''}>Sau ›</button></div></div>
+          ${it.key && !it.impossible ? '<div class="pinrow"><button class="btn" id="bpin"></button><div class="pinbox" id="pinbox"></div></div>' : ''}
           ${it.impossible ? `<div class="nofix"><b>🚫 Không có công thức nào giải được</b>Trạng thái này không thể xảy ra nếu chỉ xoay các mặt — khối đã bị bung mảnh hoặc vặn góc. Phải sửa bằng tay (xem bên dưới).</div>` : `
           <h2 style="margin-top:14px">${it.after && !it.big ? 'Công thức sửa F2L' : 'Công thức'} <small style="color:var(--muted);font-weight:400">(${C.tokens(it.play).length} bước — bấm một bước để nhảy tới)</small></h2>
           <div class="algbox" id="algbox">${C.tokens(it.play).map((t, i) => `<button class="mv" data-i="${i}">${esc(t)}</button>`).join('')}</div>`}
@@ -910,8 +911,7 @@
               <code style="color:var(--accent)">${it.setup === '' ? '(không cần — bắt đầu từ khối đã giải)' : esc(it.setup ?? C.invertAlg(it.alg))}</code>
             </div>`}
           </div>
-          <p style="margin-top:16px" class="ctrls detail-acts"><button class="btn ${learned.has(it.key) ? 'ok' : ''}" id="blearn">${learned.has(it.key) ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc'}</button>${it.key && !it.impossible ? '<button class="btn" id="bpin"></button>' : ''}</p>
-          ${it.key && !it.impossible ? '<div class="pinbox" id="pinbox"></div>' : ''}
+          <p style="margin-top:16px" class="ctrls detail-acts"><button class="btn ${learned.has(it.key) ? 'ok' : ''}" id="blearn">${learned.has(it.key) ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc'}</button></p>
         </div>
       </div>`;
     modal.classList.remove('hidden');
