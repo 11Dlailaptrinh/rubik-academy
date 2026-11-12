@@ -363,7 +363,7 @@
         <div class="thumb">${thumbHTML(it)}</div>
         <div class="t"><b class="pin-name">${esc(p.name || orig)}</b><span class="pin-tools"><button class="pin-mv" data-m="-1" title="Lên trước" ${i ? '' : 'disabled'}>‹</button><button class="pin-mv" data-m="1" title="Xuống sau" ${i < rows.length - 1 ? '' : 'disabled'}>›</button><button class="pin-ed" title="Đặt tên / ghi chú">✎</button><button class="pin-x" title="Bỏ ghim">✕</button></span></div>
         ${p.name ? '<div class="pin-orig">' + esc(orig) + '</div>' : ''}
-        <div class="alg">${esc(v.alg || '')}</div>
+        <div class="alg pin-alg">${v.pre ? '<span class="auf" title="Xoay U trước (AUF)">' + esc(v.pre) + '</span> ' : ''}${esc(v.alg || '')}${v.post ? ' <span class="auf" title="Xoay U sau (AUF)">' + esc(v.post) + '</span>' : ''}</div>
         ${p.note ? '<div class="pin-note">' + esc(p.note) + '</div>' : ''}
         <form class="pin-form hidden">
           <label>Tên của bạn<input name="name" maxlength="60" placeholder="${esc(orig)}" value="${esc(p.name || '')}"></label>
