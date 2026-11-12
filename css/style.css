@@ -406,3 +406,22 @@ button, a, .card, .sv-c { touch-action: manipulation; -webkit-tap-highlight-colo
 .linkbtn{background:none;border:0;padding:0;color:inherit;cursor:pointer;text-align:left;font:inherit}
 .linkbtn:hover code{text-decoration:underline}
 .altall small{color:var(--muted)}
+
+/* Ghim công thức hay dùng */
+.pins{margin:8px 0 18px}
+.pins-n{font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted);vertical-align:middle}
+.pin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:10px}
+.pin-card{cursor:pointer}
+.pin-card .t{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.pin-tools{display:flex;gap:2px;flex-shrink:0}
+.pin-tools button{background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:13px;line-height:1;padding:0}
+.pin-tools button:hover:not(:disabled){color:var(--text);border-color:var(--accent)}
+.pin-tools button:disabled{opacity:.3;cursor:default}
+.pin-note{margin-top:6px;font-size:12.5px;color:var(--text);background:rgba(255,213,0,.08);border-left:3px solid var(--accent);padding:5px 8px;border-radius:4px;white-space:pre-wrap;word-break:break-word}
+.pin-empty{margin-top:8px}
+.pinmark{margin-right:4px;font-size:12px}
+.btn.pin-on{border-color:var(--accent);color:var(--accent)}
+.detail-acts{justify-content:flex-start;flex-wrap:wrap}
+.pinbox label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
+.pinbox textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;font-size:14px;resize:vertical}
+@media(max-width:700px){.pin-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.pins{margin-top:0}}

@@ -10,6 +10,11 @@
   const learned = loadLearned();
   const saveLearned = () => { try { localStorage.setItem('rubik-learned', JSON.stringify([...learned])); } catch (e) { /* bỏ qua */ } updateNav(); };
   const toggleLearned = k => { learned.has(k) ? learned.delete(k) : learned.add(k); saveLearned(); };
+  // Ghim công thức hay dùng ra màn hình chính: [{ key, vi (cách giải đã chọn), note }]
+  const PIN_KEY = 'rubik-pins';
+  const pins = (() => { try { const a = JSON.parse(localStorage.getItem(PIN_KEY) || '[]'); return Array.isArray(a) ? a.filter(p => p && p.key) : []; } catch (e) { return []; } })();
+  const savePins = () => { try { localStorage.setItem(PIN_KEY, JSON.stringify(pins)); } catch (e) { /* bỏ qua */ } };
+  const pinOf = k => pins.find(p => p.key === k);
 
   /* ---------- dữ liệu ---------- */
   const SHAPE_VN = { dot: 'Chấm', line: 'Đường thẳng', L: 'Chữ L', cross: 'Chữ thập', other: 'Khác' };
@@ -335,7 +340,8 @@
   /* ---------- Trang chủ ---------- */
   function renderHome() {
     const p = k => progress(k);
-    view.innerHTML = `
+    const pinSec = '<section class="pins" id="pins"></section>';
+    view.innerHTML = `${pins.length ? pinSec : ''}
       <section class="hero">
         <div>
           <h1>Học Rubik nâng cao — 3×3, 4×4, 5×5</h1>
@@ -344,6 +350,7 @@
         </div>
         <canvas id="hero"></canvas>
       </section>
+      ${pins.length ? '' : pinSec}
       <h2>Chọn loại khối</h2>
       <div class="pzcards">${PUZZLES.map(pz => { const pp = pzProgress(pz); return `<div class="pzcard">
         <a class="pzh" href="#/${pz.id}/${pz.sections[0][0]}"><span class="pzi">${pz.icon}</span><span><b>${pz.name}</b><small>${esc(pz.desc)}</small></span><span class="pzn">${pp.n}/${pp.total}</span></a>
@@ -376,6 +383,7 @@
         <li><b>Lên 4×4 / 5×5</b> — khi đã giải 3×3 thành thạo: học <a href="#/4x4/intro">phương pháp thu gọn</a> (tâm → ghép cạnh → CFOP như 3×3), rồi parity OLL/PLL của 4×4.</li>
       </ol>
       <div class="note">Mẹo: bấm vào một thẻ để mở khối 3D và xem công thức chạy từng bước. Đánh dấu ✓ khi đã thuộc để theo dõi tiến độ — dữ liệu lưu ngay trong trình duyệt của bạn.</div>`;
+    drawPins();
     // khối xoay ở trang chủ
     const cv = $('#hero'), size = 320;
     const ctx = R.setupCanvas(cv, size, size);
@@ -388,6 +396,38 @@
       requestAnimationFrame(loop);
     };
     loop(); stopHero = () => { on = false; };
+  }
+
+  // tìm mục theo key trong mọi bộ công thức (kể cả trường hợp đặc biệt, 4×4, 5×5)
+  function findItem(key) {
+    for (const k in SETS) { const it = SETS[k].find(i => i.key === key); if (it) return { it, list: SETS[k] }; }
+    for (const k in SPECIAL) { const it = (SPECIAL[k] || []).find(i => i.key === key); if (it) return { it, list: SPECIAL[k] }; }
+    return null;
+  }
+  const variantOf = (it, vi) => vi && it.variants && it.variants[vi - 1] ? Object.assign({}, it, it.variants[vi - 1], { base: it, vi }) : it;
+  function drawPins() {
+    const box = $('#pins'); if (!box) return;
+    const rows = pins.map(p => ({ p, f: findItem(p.key) })).filter(r => r.f);
+    box.innerHTML = '<h2 style="margin:0">📌 Công thức hay dùng <span class="pins-n">' + rows.length + '</span></h2>' + (rows.length ? '<div class="pin-grid"></div>' :
+      '<div class="note pin-empty">Chưa ghim công thức nào. Mở một trường hợp bất kỳ (F2L, OLL, PLL, ZBLL…), chọn cách giải bạn hay dùng rồi bấm <b>📌 Ghim ra màn hình chính</b> — có thể thêm ghi chú riêng.</div>');
+    const grid = box.querySelector('.pin-grid'); if (!grid) return;
+    rows.forEach(({ p, f }, i) => {
+      const it = f.it, v = variantOf(it, p.vi), pz = it.N ? it.N + '×' + it.N + ' · ' : '';
+      const c = el(`<article class="card pin-card" style="--gc:${it.gc}">
+        <div class="thumb">${thumbHTML(it)}</div>
+        <div class="t"><b>${esc(pz + it.title)}</b><span class="pin-tools"><button class="pin-mv" data-m="-1" title="Lên trước" ${i ? '' : 'disabled'}>‹</button><button class="pin-mv" data-m="1" title="Xuống sau" ${i < rows.length - 1 ? '' : 'disabled'}>›</button><button class="pin-x" title="Bỏ ghim">✕</button></span></div>
+        ${p.vi ? '<div class="tags"><span class="tag">Cách ' + (p.vi + 1) + '</span></div>' : ''}
+        <div class="alg">${esc(v.alg || '')}</div>
+        ${p.note ? '<div class="pin-note">' + esc(p.note) + '</div>' : ''}</article>`);
+      grid.appendChild(c); fillThumb(c, it);
+      c.onclick = e => {
+        const idx = pins.indexOf(p);
+        if (e.target.closest('.pin-x')) { pins.splice(idx, 1); savePins(); drawPins(); return; }
+        const mv = e.target.closest('.pin-mv');
+        if (mv) { const j = idx + +mv.dataset.m; if (j >= 0 && j < pins.length) { [pins[idx], pins[j]] = [pins[j], pins[idx]]; savePins(); drawPins(); } return; }
+        openDetail(v, f.list, () => drawPins());
+      };
+    });
   }
 
   /* ---------- Học từ đầu ---------- */
@@ -736,7 +776,7 @@
       for (const it of items) {
         const c = el(`<article class="card ${learned.has(it.key) ? 'done' : ''}" data-k="${it.key}" style="--gc:${it.gc}">
           <div class="thumb">${thumbHTML(it)}</div>
-          <div class="t"><b>${esc(it.title)}</b><button class="tick ${learned.has(it.key) ? 'on' : ''}" title="Đã thuộc">✓</button></div>
+          <div class="t"><b>${pinOf(it.key) ? '<span class="pinmark" title="Đã ghim ra màn hình chính">📌</span>' : ''}${esc(it.title)}</b><button class="tick ${learned.has(it.key) ? 'on' : ''}" title="Đã thuộc">✓</button></div>
           <div class="tags">${it.star ? '<span class="tag star">⭐ 2-look</span>' : ''}${it.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
           <div class="alg">${it.alg ? esc(it.alg) : it.impossible ? '🚫 không có công thức — sửa bằng tay' : '— không cần công thức —'}</div></article>`);
         (sectioned ? target[it.group] : target.all).appendChild(c); fillThumb(c, it);
@@ -777,7 +817,7 @@
   modal.addEventListener('mousedown', e => { if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', e => {
     if (modal.classList.contains('hidden') || !player) return;
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === 'Escape') closeModal();
     else if (e.key === ' ') { e.preventDefault(); player.toggle(); }
     else if (e.key === 'ArrowRight') player.next();
@@ -870,7 +910,8 @@
               <code style="color:var(--accent)">${it.setup === '' ? '(không cần — bắt đầu từ khối đã giải)' : esc(it.setup ?? C.invertAlg(it.alg))}</code>
             </div>`}
           </div>
-          <p style="margin-top:16px"><button class="btn ${learned.has(it.key) ? 'ok' : ''}" id="blearn">${learned.has(it.key) ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc'}</button></p>
+          <p style="margin-top:16px" class="ctrls detail-acts"><button class="btn ${learned.has(it.key) ? 'ok' : ''}" id="blearn">${learned.has(it.key) ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc'}</button>${it.key && !it.impossible ? '<button class="btn" id="bpin"></button>' : ''}</p>
+          ${it.key && !it.impossible ? '<div class="pinbox" id="pinbox"></div>' : ''}
         </div>
       </div>`;
     modal.classList.remove('hidden');
@@ -918,6 +959,24 @@
       const cb = modalCtx.onClose; player.pause(); openDetail(nxt, list, cb);
     });
     if (hasGray) $('#gray').addEventListener('change', e => frames.forEach((f, i) => R.renderCubeThumb(f.querySelector('canvas'), P.states[i], 70, 70, e.target.checked ? grayFn : undefined, yawOf(), it.N)));
+    if ($('#bpin')) {
+      const bpin = $('#bpin'), box = $('#pinbox');
+      const drawPin = () => {
+        const p = pinOf(it.key), same = p && (p.vi || 0) === vi;
+        bpin.className = 'btn ' + (same ? 'pin-on' : '');
+        bpin.textContent = !p ? '📌 Ghim ra màn hình chính' : same ? '📌 Đã ghim — bỏ ghim' : '📌 Ghim cách này (đang ghim ' + (p.vi ? 'cách ' + (p.vi + 1) : 'công thức chính') + ')';
+        box.innerHTML = p ? '<label>Ghi chú của bạn <small>(hiện ở màn hình chính, tự lưu)</small><textarea id="pinnote" rows="2" maxlength="300" placeholder="vd: dùng khi thấy đèn pha bên trái, cầm ngón cái ở F...">' + esc(p.note || '') + '</textarea></label>' : '';
+        const ta = $('#pinnote'); if (ta) ta.oninput = () => { p.note = ta.value; savePins(); };
+      };
+      bpin.onclick = () => {
+        const p = pinOf(it.key);
+        if (p && (p.vi || 0) === vi) pins.splice(pins.indexOf(p), 1);
+        else if (p) p.vi = vi;
+        else pins.push({ key: it.key, vi, note: '' });
+        savePins(); drawPin();
+      };
+      drawPin();
+    }
     $('#blearn').onclick = e => { toggleLearned(it.key); e.target.className = 'btn ' + (learned.has(it.key) ? 'ok' : ''); e.target.textContent = learned.has(it.key) ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc'; };
     upd();
   }
