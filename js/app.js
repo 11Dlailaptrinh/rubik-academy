@@ -339,63 +339,8 @@
 
   /* ---------- Trang chủ ---------- */
   function renderHome() {
-    const p = k => progress(k);
-    const pinSec = '<section class="pins" id="pins"></section>';
-    view.innerHTML = `${pins.length ? pinSec : ''}
-      <section class="hero">
-        <div>
-          <h1>Học Rubik nâng cao — 3×3, 4×4, 5×5</h1>
-          <p class="lead">Tất cả <b>41 F2L + 57 OLL + 21 PLL</b> của phương pháp CFOP cho <b>3×3</b>, cùng tâm, ghép cạnh, CFOP và parity cho <b>4×4, 5×5</b>. Mỗi trường hợp có <b>hình minh hoạ trực quan</b>, khối 3D xoay được và hoạt hình từng bước. Mọi công thức đều đã được kiểm chứng bằng mô phỏng khối Rubik.</p>
-          <p><a class="btn pri" href="#/learn" style="text-decoration:none">🎓 Học từ đầu (người mới)</a> <a class="btn" href="#/notation" style="text-decoration:none">Ký hiệu</a> <a class="btn" href="#/practice" style="text-decoration:none">Luyện tập</a></p>
-        </div>
-        <canvas id="hero"></canvas>
-      </section>
-      ${pins.length ? '' : pinSec}
-      <h2>Chọn loại khối</h2>
-      <div class="pzcards">${PUZZLES.map(pz => { const pp = pzProgress(pz); return `<div class="pzcard">
-        <a class="pzh" href="#/${pz.id}/${pz.sections[0][0]}"><span class="pzi">${pz.icon}</span><span><b>${pz.name}</b><small>${esc(pz.desc)}</small></span><span class="pzn">${pp.n}/${pp.total}</span></a>
-        <div class="bar"><i style="width:${pp.pct}%"></i></div>
-        <div class="pzl">${pz.sections.map(([sec, t, ic]) => `<a href="#/${pz.id}/${sec}">${ic} ${t}</a>`).join('')}</div></div>`; }).join('')}</div>
-      <h2>3×3 — Bốn bước của CFOP</h2>
-      <div class="steps">
-        <div class="step"><span class="n">1</span><h3>Cross</h3><p>Làm dấu cộng trắng ở tầng dưới, các cạnh khớp màu tâm. Dựa vào trực giác, không cần công thức.</p></div>
-        <a class="step" href="#/f2l"><span class="n">2</span><h3>F2L · ${p('f2l').n}/41</h3><p>Ghép cặp góc-cạnh, đưa vào rãnh. Hoàn thành 2 tầng đầu.</p><div class="bar"><i style="width:${p('f2l').pct}%"></i></div></a>
-        <a class="step" href="#/oll"><span class="n">3</span><h3>OLL · ${p('oll').n}/57</h3><p>Làm mặt trên cùng màu vàng.</p><div class="bar"><i style="width:${p('oll').pct}%"></i></div></a>
-        <a class="step" href="#/pll"><span class="n">4</span><h3>PLL · ${p('pll').n}/21</h3><p>Hoán vị tầng cuối để hoàn thành khối.</p><div class="bar"><i style="width:${p('pll').pct}%"></i></div></a>
-      </div>
-      <h2>3×3 nâng cao: bỏ bớt bước ở tầng cuối</h2>
-      <div class="steps">
-        <a class="step" href="#/wv"><span class="n">❄️</span><h3>Winter Variation · ${p('wv').n}/27</h3><p>Chèn cặp F2L cuối và làm vàng mặt trên cùng lúc — bỏ qua OLL.</p><div class="bar"><i style="width:${p('wv').pct}%"></i></div></a>
-        <a class="step" href="#/coll"><span class="n">🔶</span><h3>COLL · ${p('coll').n}/40</h3><p>Đã có chữ thập vàng: xong cả 4 góc trong 1 công thức, chỉ còn PLL cạnh.</p><div class="bar"><i style="width:${p('coll').pct}%"></i></div></a>
-        <a class="step" href="#/zbll"><span class="n">🧠</span><h3>ZBLL · ${p('zbll').n}/472</h3><p>Đã có chữ thập vàng: giải hết tầng trên trong 1 công thức (thay OLL + PLL).</p><div class="bar"><i style="width:${p('zbll').pct}%"></i></div></a>
-      </div>
-      <h2>Lộ trình học 3×3 gợi ý (từ dễ đến đầy đủ)</h2>
-      <ol class="road">
-        <li><b>Chưa biết gì?</b> Bắt đầu từ <a href="#/learn">Học từ đầu</a>: 10 bài từ làm quen khối đến tự giải xong khối 3×3.</li>
-        <li><b>Ký hiệu</b> — nắm R, U, F, M, r... và dấu nháy/số 2. <a href="#/notation">Xem ngay</a></li>
-        <li><b>F2L bằng trực giác</b> — học các trường hợp ngắn 3 bước đầu tiên (F2L 1–4), sau đó đến 6–7 bước. Hiểu "ghép cặp rồi đưa vào" quan trọng hơn học thuộc.</li>
-        <li><b>2-look OLL</b> ⭐ — bước 1 làm chữ thập vàng (3 công thức: <a href="#/oll">OLL 2, 44, 45</a>), bước 2 làm vàng nốt các góc (7 công thức: <a href="#/oll">OLL 21–27</a>).</li>
-        <li><b>2-look PLL</b> ⭐ — bước 1 hoán vị góc (<a href="#/pll">Aa, Ab, E</a>), bước 2 hoán vị cạnh (<a href="#/pll">Ua, Ub, H, Z</a>).</li>
-        <li><b>F2L đầy đủ</b> — luyện đủ 41 trường hợp để giải F2L không dừng.</li>
-        <li><b>PLL đầy đủ</b> — thêm 14 PLL còn lại (J, T, R, F, Y, V, N, G).</li>
-        <li><b>OLL đầy đủ</b> — 57 trường hợp, học theo nhóm hình dạng (chấm, đường thẳng, chữ L, chữ thập).</li>
-        <li><b>Tự kiểm tra</b> — làm các bài trong mục <a href="#/exam">Kiểm tra</a> để biết mình đã nắm chắc tới đâu.</li>
-        <li><b>Lên 4×4 / 5×5</b> — khi đã giải 3×3 thành thạo: học <a href="#/4x4/intro">phương pháp thu gọn</a> (tâm → ghép cạnh → CFOP như 3×3), rồi parity OLL/PLL của 4×4.</li>
-      </ol>
-      <div class="note">Mẹo: bấm vào một thẻ để mở khối 3D và xem công thức chạy từng bước. Đánh dấu ✓ khi đã thuộc để theo dõi tiến độ — dữ liệu lưu ngay trong trình duyệt của bạn.</div>`;
+    view.innerHTML = '<section class="pins home-pins" id="pins"></section>';
     drawPins();
-    // khối xoay ở trang chủ
-    const cv = $('#hero'), size = 320;
-    const ctx = R.setupCanvas(cv, size, size);
-    const st = SETS.oll.find(x => x.num === 27).state;
-    let on = true, yaw = -35 * D2R;
-    const loop = () => {
-      if (!on) return;
-      yaw += 0.008; ctx.clearRect(0, 0, size, size);
-      R.drawCube(ctx, st, { cx: size / 2, cy: size / 2, scale: size * 0.175, persp: 9, yaw, pitch: 28 * D2R });
-      requestAnimationFrame(loop);
-    };
-    loop(); stopHero = () => { on = false; };
   }
 
   // tìm mục theo key trong mọi bộ công thức (kể cả trường hợp đặc biệt, 4×4, 5×5)
@@ -408,21 +353,31 @@
   function drawPins() {
     const box = $('#pins'); if (!box) return;
     const rows = pins.map(p => ({ p, f: findItem(p.key) })).filter(r => r.f);
-    box.innerHTML = '<h2 style="margin:0">📌 Công thức hay dùng <span class="pins-n">' + rows.length + '</span></h2>' + (rows.length ? '<div class="pin-grid"></div>' :
-      '<div class="note pin-empty">Chưa ghim công thức nào. Mở một trường hợp bất kỳ (F2L, OLL, PLL, ZBLL…), chọn cách giải bạn hay dùng rồi bấm <b>📌 Ghim ra màn hình chính</b> — có thể thêm ghi chú riêng.</div>');
+    box.innerHTML = '<h1 class="pins-h">📌 Công thức của tôi <span class="pins-n">' + rows.length + '</span></h1>' + (rows.length ? '<div class="pin-grid"></div>' :
+      `<div class="box pin-empty"><b>Chưa có công thức nào được ghim.</b><br>Mở một trường hợp bất kỳ, chọn cách giải bạn hay dùng rồi bấm <b>📌 Ghim ra màn hình chính</b>. Bạn có thể đặt tên riêng và ghi chú cho từng công thức.
+        <div class="pin-links"><a class="btn" href="#/f2l">🧩 F2L</a><a class="btn" href="#/oll">🟨 OLL</a><a class="btn" href="#/pll">🔄 PLL</a><a class="btn" href="#/learn">🎓 Học từ đầu</a></div></div>`);
     const grid = box.querySelector('.pin-grid'); if (!grid) return;
     rows.forEach(({ p, f }, i) => {
-      const it = f.it, v = variantOf(it, p.vi), pz = it.N ? it.N + '×' + it.N + ' · ' : '';
+      const it = f.it, v = variantOf(it, p.vi), orig = (it.N ? it.N + '×' + it.N + ' · ' : '') + it.title + (p.vi ? ' · cách ' + (p.vi + 1) : '');
       const c = el(`<article class="card pin-card" style="--gc:${it.gc}">
         <div class="thumb">${thumbHTML(it)}</div>
-        <div class="t"><b>${esc(pz + it.title)}</b><span class="pin-tools"><button class="pin-mv" data-m="-1" title="Lên trước" ${i ? '' : 'disabled'}>‹</button><button class="pin-mv" data-m="1" title="Xuống sau" ${i < rows.length - 1 ? '' : 'disabled'}>›</button><button class="pin-x" title="Bỏ ghim">✕</button></span></div>
-        ${p.vi ? '<div class="tags"><span class="tag">Cách ' + (p.vi + 1) + '</span></div>' : ''}
+        <div class="t"><b class="pin-name">${esc(p.name || orig)}</b><span class="pin-tools"><button class="pin-mv" data-m="-1" title="Lên trước" ${i ? '' : 'disabled'}>‹</button><button class="pin-mv" data-m="1" title="Xuống sau" ${i < rows.length - 1 ? '' : 'disabled'}>›</button><button class="pin-ed" title="Đặt tên / ghi chú">✎</button><button class="pin-x" title="Bỏ ghim">✕</button></span></div>
+        ${p.name ? '<div class="pin-orig">' + esc(orig) + '</div>' : ''}
         <div class="alg">${esc(v.alg || '')}</div>
-        ${p.note ? '<div class="pin-note">' + esc(p.note) + '</div>' : ''}</article>`);
+        ${p.note ? '<div class="pin-note">' + esc(p.note) + '</div>' : ''}
+        <form class="pin-form hidden">
+          <label>Tên của bạn<input name="name" maxlength="60" placeholder="${esc(orig)}" value="${esc(p.name || '')}"></label>
+          <label>Ghi chú<textarea name="note" rows="3" maxlength="300" placeholder="vd: dùng khi thấy đèn pha bên trái...">${esc(p.note || '')}</textarea></label>
+          <div class="ctrls"><button class="btn pri" type="submit">Lưu</button><button class="btn" type="button" data-cancel>Huỷ</button></div>
+        </form></article>`);
       grid.appendChild(c); fillThumb(c, it);
+      const form = c.querySelector('.pin-form');
+      form.onsubmit = e => { e.preventDefault(); p.name = form.querySelector('[name=name]').value.trim(); p.note = form.querySelector('[name=note]').value.trim(); savePins(); drawPins(); };
       c.onclick = e => {
+        if (e.target.closest('.pin-form')) { if (e.target.closest('[data-cancel]')) drawPins(); return; }
         const idx = pins.indexOf(p);
-        if (e.target.closest('.pin-x')) { pins.splice(idx, 1); savePins(); drawPins(); return; }
+        if (e.target.closest('.pin-x')) { if (confirm('Bỏ ghim "' + (p.name || orig) + '"?')) { pins.splice(idx, 1); savePins(); drawPins(); } return; }
+        if (e.target.closest('.pin-ed')) { c.classList.add('editing'); form.classList.remove('hidden'); form.querySelector('[name=name]').focus(); return; }
         const mv = e.target.closest('.pin-mv');
         if (mv) { const j = idx + +mv.dataset.m; if (j >= 0 && j < pins.length) { [pins[idx], pins[j]] = [pins[j], pins[idx]]; savePins(); drawPins(); } return; }
         openDetail(v, f.list, () => drawPins());
@@ -965,8 +920,10 @@
         const p = pinOf(it.key), same = p && (p.vi || 0) === vi;
         bpin.className = 'btn ' + (same ? 'pin-on' : '');
         bpin.textContent = !p ? '📌 Ghim ra màn hình chính' : same ? '📌 Đã ghim — bỏ ghim' : '📌 Ghim cách này (đang ghim ' + (p.vi ? 'cách ' + (p.vi + 1) : 'công thức chính') + ')';
-        box.innerHTML = p ? '<label>Ghi chú của bạn <small>(hiện ở màn hình chính, tự lưu)</small><textarea id="pinnote" rows="2" maxlength="300" placeholder="vd: dùng khi thấy đèn pha bên trái, cầm ngón cái ở F...">' + esc(p.note || '') + '</textarea></label>' : '';
+        box.innerHTML = p ? '<label>Tên của bạn <small>(hiện ở màn hình chính, tự lưu)</small><input id="pinname" maxlength="60" placeholder="' + esc(base.title) + '" value="' + esc(p.name || '') + '"></label>' +
+          '<label>Ghi chú<textarea id="pinnote" rows="2" maxlength="300" placeholder="vd: dùng khi thấy đèn pha bên trái, cầm ngón cái ở F...">' + esc(p.note || '') + '</textarea></label>' : '';
         const ta = $('#pinnote'); if (ta) ta.oninput = () => { p.note = ta.value; savePins(); };
+        const nm = $('#pinname'); if (nm) nm.oninput = () => { p.name = nm.value.trim(); savePins(); };
       };
       bpin.onclick = () => {
         const p = pinOf(it.key);

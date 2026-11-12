@@ -1,5 +1,5 @@
 /* Sinh tự động bởi tools/build-web.js */
-const CACHE = 'rubik-academy-750421b1f7';
+const CACHE = 'rubik-academy-7262b838fd';
 const FILES = [
  "./",
  "index.html",
